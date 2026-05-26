@@ -11,16 +11,26 @@ app = Flask(__name__)
 CORS(app)   # allows your HTML frontend to call this API
 
 # ── Load model once at startup ──────────────────────────
-MODEL_PATH      = "../model/plant_model.h5"
-CLASS_NAMES_PATH = "../model/class_names.json"
+# Fix paths to work from any directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "..", "model", "plant_model.h5")
+CLASS_NAMES_PATH = os.path.join(BASE_DIR, "..", "model", "class_names.json")
 
-print("Loading model...")
-model = tf.keras.models.load_model(MODEL_PATH)
+print(f"Loading model from: {MODEL_PATH}")
+print(f"Model exists: {os.path.exists(MODEL_PATH)}")
 
-with open(CLASS_NAMES_PATH, "r") as f:
-    class_names = json.load(f)   # { "0": "Apple___Apple_scab", "1": "Apple___Black_rot", ... }
+try:
+    model = tf.keras.models.load_model(MODEL_PATH)
+    
+    with open(CLASS_NAMES_PATH, "r") as f:
+        class_names = json.load(f)   # { "0": "Apple___Apple_scab", "1": "Apple___Black_rot", ... }
+    
+    print(f"Model loaded. {len(class_names)} classes available.")
+except Exception as e:
+    print(f"ERROR loading model: {str(e)}")
+    print("Make sure plant_model.h5 exists in the model/ folder")
+    raise
 
-print(f"Model loaded. {len(class_names)} classes available.")
 # ───────────────────────────────────────────────────────
 
 # Disease treatment info — add more as needed
@@ -110,4 +120,4 @@ def predict():
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
